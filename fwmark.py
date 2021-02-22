@@ -230,7 +230,7 @@ def main():
     parser = argparse.ArgumentParser(description='run program in a new cgroup with specified fwmark')
     parser.add_argument('--cgroup2', type=pathlib.Path, default=None, help='cgroup2 mountpoint, usually under /sys/fs/cgroup')
     parser.add_argument('fwmark', type=lambda s: int(s, 0), help='fwmark to be applied')
-    parser.add_argument('command', nargs='*', help='command to be executed (default to $SHELL if omitted)')
+    parser.add_argument('command', nargs=argparse.REMAINDER, help='command to be executed (default to $SHELL if omitted)')
     args = parser.parse_args()
 
     ## check arguments

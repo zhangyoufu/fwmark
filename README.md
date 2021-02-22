@@ -29,7 +29,7 @@ root@localhost:~#
 
 ```
 % ./fwmark.py --help
-usage: fwmark.py [-h] [--cgroup2 CGROUP2] fwmark [command ...]
+usage: fwmark.py [-h] [--cgroup2 CGROUP2] fwmark ...
 
 run program in a new cgroup with specified fwmark
 
