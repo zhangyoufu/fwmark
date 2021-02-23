@@ -254,7 +254,8 @@ def main():
 
     ## create cgroup (random systemd.scope under current systemd.slice)
     systemd_scope_name = f'fwmark-{args.fwmark:08X}-{os.urandom(8).hex()}.scope'
-    cgroup_path = args.cgroup2 / get_self_slice() / systemd_scope_name
+    systemd_slice_path = get_self_slice()
+    cgroup_path = args.cgroup2 / systemd_slice_path / systemd_scope_name
     cgroup_path.mkdir(mode=0o755)
     cgroup_fd = os.open(cgroup_path, os.O_RDONLY | os.O_DIRECTORY)
 
@@ -276,7 +277,7 @@ def main():
         'systemd-run',
         '--quiet',
         '--collect',
-        '--slice-inherit',
+        f'--slice={systemd_slice_path.name}',
         '--scope',
         f'--unit={systemd_scope_name}',
         *args.command,
