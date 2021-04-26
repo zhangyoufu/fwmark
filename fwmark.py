@@ -272,6 +272,7 @@ def main():
     bpf_prog_attach(bpf_prog_fd, cgroup_fd, BPF_CGROUP_INET_SOCK_CREATE)
 
     ## execute command
+    os.environ['FWMARK'] = str(args.fwmark)
     os.execlp(
         'systemd-run',
         'systemd-run',
