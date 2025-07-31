@@ -2,6 +2,7 @@
 import ctypes.util
 import os
 import pathlib
+import subprocess
 
 class _align_8(ctypes.Structure):
     _fields_ = [
@@ -31,19 +32,24 @@ class bpf_prog_attach_attr(ctypes.Structure):
         # remaining fields are zeroed by bpf syscall
     ]
 
-## bpf syscall
+## bpf syscall number
 
-if os.uname()[4] == 'x86_64':
-    __NR_bpf = 321
-else:
-    raise NotImplementedError
-    # if you want to port this script, add syscall number here
-    # and make sure bit order in bpf_insn matches
+match os.uname()[4]:
+    case 'x86_64':
+        __NR_bpf = 321
+    case 'aarch64':
+        __NR_bpf = 280
+    case _:
+        raise NotImplementedError
+        # if you want to port this script, add syscall number here
+        # and make sure bit order in bpf_insn matches
 
-syscall = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True).syscall
+libc = ctypes.CDLL(ctypes.util.find_library('c'), use_errno=True)
 
-def bpf(cmd, attr):
-    return syscall(__NR_bpf, cmd, ctypes.byref(attr), ctypes.sizeof(attr))
+## syscall wrapper
+
+def bpf(cmd: int, attr: bpf_prog_load_attr | bpf_prog_attach_attr) -> int:
+    return libc.syscall(__NR_bpf, cmd, ctypes.byref(attr), ctypes.sizeof(attr))
 
 ## bpf command constants
 
@@ -270,6 +276,15 @@ def main():
 
     ## attach bpf program to cgroup
     bpf_prog_attach(bpf_prog_fd, cgroup_fd, BPF_CGROUP_INET_SOCK_CREATE)
+
+    ## bind-mount /etc/resolv.conf
+    resolv_conf_path = f'/etc/fwmark/resolv.conf/{args.fwmark}'
+    if hasattr(os, 'unshare') and os.path.exists(resolv_conf_path):
+        os.unshare(os.CLONE_NEWNS)
+        mountpoint = subprocess.check_output(['stat', '--printf', '%m', '/etc/resolv.conf'])
+        subprocess.check_call(['mount', '--make-slave', mountpoint])
+        subprocess.check_call(['mount', '--no-canonicalize', '--bind', resolv_conf_path, '/etc/resolv.conf'])
+        subprocess.check_call(['mount', '--make-shared', mountpoint]) # slave,shared
 
     ## execute command
     os.environ['FWMARK'] = str(args.fwmark)
