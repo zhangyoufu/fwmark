@@ -2,6 +2,8 @@
 
 This Python3 script create a new cgroup and attach eBPF program to enforce fwmark (SO_MARK) as soon as the socket is created. Inspired by `ip vrf exec`.
 
+It also bind-mount `/etc/fwmark/resolv.conf/{FWMARK}` to `/etc/resolv.conf` if available. Inspired by `ip netns exec`.
+
 This should be useful for diagnosing multi-homing network. (in case you configured policy routing correctly)
 
 ```
